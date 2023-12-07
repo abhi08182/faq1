@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+
+    <script rel="preload" type="text/javascript" src=".././js/jquery.min.js"></script>
+    <script type="text/javascript" src=".././js/popper.min.js"></script>
+    <script type="text/javascript" src=".././js/bootstrap.js"></script>
+    <link rel="stylesheet" type="text/css" href=".././css/bootstrap.min.css" />
+
+
+    <link rel="stylesheet" type="text/css" href="../Faq/dataTables.bootstrap4.min.css" />
+    <link rel="stylesheet" type="text/css" href="../Faq/fonts/ionicons.min.css" />
+    <link rel="stylesheet" type="text/css" href="../Faq/fonts/typicons.css" />
+
+    <script rel="preload" type="text/javascript" src=".././js/react.js"></script>
+    <script rel="preload" type="text/javascript" src=".././js/react-dom.js"></script>
+    <script rel="preload" type="text/javascript" src=".././js/browser.js"></script>
+
+    <script rel="text/javascript" type="text/javascript" src="../Faq/jquery.dataTables.min.js"></script>
+    <script rel="text/javascript" type="text/javascript" src="../Faq/moment.min.js"></script>
+
+    <style>
+        .paginate_button {
+            padding-left: 20px;
+            text-decoration: initial;
+            text-align: center;
+        }
+
+        .paginate_button:hover {
+            padding-left: 20px;
+            text-decoration: initial;
+            text-align: center;
+            color: black;
+            font-size: large;
+            font-weight: bold;
+        }
+
+        .view-btn {
+            background-color: rgba(158, 192, 206, 0.562);
+        }
+
+        .button-row {
+            display: flex;
+            gap: 10px;
+        }
+
+        .view-btn {
+            display: flex;
+            align-items: center;
+        }
+
+        .view-btn i {
+            margin-right: 5px;
+        }
+    </style>
+
+    <!-- <script>
+        $(".tab-structure").load('./Faqs.json', function (response, status, xhr) {
+            if (status == 'success') {
+
+                $.getJSON('./Faqs.json', function (data) {
+            
+                    console.log(data.faqId);
+                });
+            } else {
+                console.log('Error loading JSON file');
+            }
+        });
+
+    </script> 
+    <script>
+        $(document).ready(function() {
+          $('#order-listing_info').DataTable();
+        });
+    </script>   -->
+    <script>
+
+        $(document).ready(function () {
+            $("#order-listing_info").DataTable({
+                searching: false
+
+            });
+        });
+    </script>
+
+
+</head>
+
+<body>
+    <div id="Faq"> </div>
+    <script type="text/babel">
+        class Faq extends React.Component {
+            constructor() {
+                super();
+                this.state = {
+                    data: [],
+                    publishedData: [],
+                    pendingData: [],
+                    error: null,
+                    uniqueSection: [],
+                    Question:'',
+                    Answer:'',
+                    Category:'',
+                    modelItm: [],
+                    modelType: ''
+                }
+
+                this.handleDeleteRow = this.handleDeleteRow.bind(this);
+                // this.handlePutRequest = this.handlePutRequest.bind(this);
+                this.onChangehandle = this.onChangehandle.bind(this);
+                this.popUp = this.popUp.bind(this);
+                this.searchById = this.searchById.bind(this);
+                this.searchChange = this.searchChange.bind(this);
+            }
+
+
+            componentDidMount() {
+                let that = this;
+                $.ajax({
+                    crossDomain: true,
+                    url: "http://www.scanbyqr.com/api/Faqs",
+                    type: 'GET',
+                    success: function (response) {
+                        console.log(response);
+                        var publishedData = []
+                        console.log(publishedData);
+                        var pendingData = []
+                        console.log(pendingData);
+
+                        response.forEach(itm => {
+
+
+                            if (itm.isPublished == true) {
+                                publishedData.push(itm)
+                            }
+                            else {
+                                pendingData.push(itm)
+                            }
+                        });
+
+
+
+                        that.setState({
+                            data: response,
+                            publishedData,
+                            pendingData,
+                            uniqueSection: [...new Set(publishedData.map(item => item.category))]
+
+                        }, () => {
+                            var table = $('#order-listing_info').DataTable();
+                           
+
+                            // GET UNIQUE SECTION FROM PUBLISHED DATA
+                            // var uniqueSection = [...new Set(that.state.publishedData.map(item => item.category))];
+                            // console.log(uniqueSection);
+
+                        })
+
+
+
+
+
+                    }
+
+                });
+
+                // var table = $('#order-listing_info').DataTable();
+
+
+
+
+
+                // var settings = {
+                //     'cache': false,
+                //     'dataType': "jsonp",
+                //     "async": true,
+                //     "crossDomain": true,
+                //     "url": "http://www.scanbyqr.com/api/Faqs",
+                //     "method": "GET",
+                //     "headers": {
+                //         "accept": "application/json",
+                //         "Access-Control-Allow-Origin": "*"
+                //     }
+                // }
+                //  $.ajax(settings).done(function (response) {
+                //     console.log(response);
+                //     that.setState({
+                //             data: JSON.parse(response)
+
+                //         });
+                // }); 
+
+            }
+
+            handleDeleteRow(faqID) {
+
+                const shouldDelete = window.confirm('Delete the row?');
+                if (shouldDelete) {
+                    const updatedData = this.state.publishedData.filter((item) => item.faqId !== faqID);
+                    this.setState({ publishedData: updatedData });
+                }
+            }
+
+
+
+            handlePutRequest(itm, type, e) {
+                console.log(e);
+
+                console.log(itm);
+                console.log(type);
+                console.log(this.popUp(itm, type));
+
+                this.setState({
+                    modelItm: itm,
+                    modelType: type
+                }, () => {
+                    setTimeout(() => {
+                        $('#FaqPopupModel').modal('show');
+                    }, 1000);
+                })
+
+
+                //     $('#myModal').modal('show');
+                //    $("#faqmodel ").html(this.popUp(itm,type))
+
+
+
+                // var data = {
+                //     "faqId": 0,
+                //     "question": "string",
+                //     "answer": "string",
+                //     "category": "string",
+                //     "createdDate": "2021-07-07T06:56:59.074Z",
+                //     "modifiedDate": "2021-07-07T06:56:59.074Z"
+                // };
+
+
+                //     $.ajax({
+                //         crossDomain: true,
+                //         url: "http://www.scanbyqr.com/api/Faqs",
+                //         type: 'PUT',
+                //         data: JSON.stringify(data),
+                //         contentType: "application/json",
+                //         dataType: 'json',
+                //         success: function (response) {
+                //             console.log(response);
+                //         }
+                //     });
+
+            }
+
+            onChangehandle(Type,e){
+
+               // console.log("e",e.target.value);
+              //  console.log(Type);
+                var ModelChangeValue = {...this.state.modelItm};
+                
+                if(Type == "question"){
+                
+                    ModelChangeValue.question= e.target.value
+                }
+                else if(Type == "answer"){
+                
+                    ModelChangeValue.answer= e.target.value 
+                }
+                else if(Type == "categogy"){
+                
+                    ModelChangeValue.category= e.target.value 
+                }
+               
+                console.log(ModelChangeValue);
+                  
+                this.setState({
+                    modelItm:ModelChangeValue
+                })
+      
+            }
+
+            handleUpdateData(faqID) {
+                console.log("faqID",faqID);
+                //const updateState = this.state.publishedData[faqID] = this.state.modelItm;
+                var ModelChangeValue = [...this.state.publishedData];
+
+               // ModelChangeValue[faqID -1] = this.state.modelItm
+                console.log("ModelChangeValue",ModelChangeValue);
+            
+                var index = ModelChangeValue.findIndex(itmx => itmx.faqId == faqID);
+                console.log("index",index);
+        
+        
+                ModelChangeValue[index] = this.state.modelItm;
+                
+
+                this.setState({
+                    publishedData:ModelChangeValue
+                    
+                },() =>{
+                
+                    var table = $('#order-listing_info').DataTable();
+                    //table.destroy();
+                  //  table.draw();   
+                
+                })
+               
+            }
+
+
+            popUp(itm, type) {
+                return (
+
+                    <div id="FaqPopupModel" className="modal fade" aria-labelledby="faq" aria-modal="false" role="dialog" style={{ display: "block" }} >
+                        <div className="modal-dialog">
+                            <div className="modal-content">
+                                {type == "view" ?
+                                    (<div className="modal-body text-left">
+
+                                        <h5>FAQid:</h5><p>{itm.faqId}</p>
+                                        <h5>Question:</h5><p>{itm.question}</p>
+                                        <h5>Answer: </h5><p>{itm.answer}</p>
+                                        <h5>Section:</h5>
+                                        <p>{itm.category}</p>
+
+                                    </div>) : (<div className="modal-body text-left">
+                                        <h5>FAQid:</h5><p>{itm.faqId}</p>
+                                        <h5>Question:</h5><input type="text" onChange={this.onChangehandle.bind(this,"question")} className="w-100" id="questionInput" value={itm.question} />
+                                        <h5>Answer: </h5><textarea onChange={this.onChangehandle.bind(this,"answer")} id="answerTextarea" className="w-100" value={itm.answer} >{itm.answer}</textarea>
+
+                                        <h5>Section:</h5>
+                                        <select
+                                            value={this.state.Category}
+                                            onChange={this.onChangehandle.bind(this,"categogy")}
+                                            className="form-select"
+                                        >
+
+                                            <option>{itm.category}</option>
+                                            {this.state.uniqueSection.map((itm, index) => (
+                                                <option key={index} value={itm}>
+                                                    {itm}
+                                                </option>
+                                            ))}
+                                        </select>
+
+
+                                    </div>)}
+
+                                {type == "view" ?
+                                    (<div className="modal-footer">
+                                        <button type="button" className="bview-btn tn btn-default" data-bs-dismiss="modal">Close</button>
+                                    </div>) :
+                                    (<div className="row m-0">
+                                        <div className="modal-footer">
+                                            <button type="button" className="bview-btn tn btn-default" data-bs-dismiss="modal" onClick={this.handleUpdateData.bind(this,itm.faqId)}>Update</button>
+                                        </div>
+                                        <div className="modal-footer">
+                                            <button type="button" className="bview-btn tn btn-default" data-bs-dismiss="modal">Close</button>
+                                        </div>
+                                    </div>
+                                    )}
+                            </div>
+
+                        </div>
+                    </div>
+
+                )
+
+
+
+
+
+
+            }
+
+
+            searchChange(e){
+
+                var searchValue = e.target.value;
+                console.log("searchValue",searchValue);
+                var searchResult = this.state.publishedData.filter(itm => itm.faqId == searchValue);
+                console.log("searchResult",searchResult);
+                this.setState({
+                    publishedData:searchResult
+                })
+            
+            }
+
+            searchById(){
+            
+           
+
+            }
+
+
+            render() {
+                return (
+
+                    <div className="container" >
+                        <div className="col-md-12 row m-0">
+                        <div className="col-md-3">
+                            <h2>Filter Data:</h2>
+
+                            
+                            <div className="input-group mb-3">
+                                <input type="text" className="form-control" placeholder="Search" aria-label="Recipient's username" aria-describedby="button-addon2" onChange={this.searchChange} />
+                                <button className="ml-2 btn btn-outline-secondary" type="button" id="button-addon2" onClick={this.searchById}>Search</button>
+                            
+                            </div>
+                        </div>
+
+
+                         <div className="col-md-9">
+                        <h2 className="mp-2">Published Status True:</h2>
+                        <table className="tab-structure table table-striped mt-3 mb-3" id="order-listing_info">
+                            <thead className="bg-primary">
+                                <tr>
+                                    <th>FAQid</th>
+                                    <th>Question</th>
+                                    <th>Answer</th>
+                                    <th>Section</th>
+                                    <th>CreatedDate</th>
+                                    <th>ModifiedDate</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+
+                            <tbody>
+                                {this.state.publishedData.length > 0 ? (this.state.publishedData.map((itm, index) =>
+
+                                    <tr key={index}>
+                                        <td>{itm.faqId}</td>
+                                        <td>{itm.question}</td>
+                                        <td>{itm.answer}</td>
+                                        <td>{itm.category}</td>
+                                        <td>{moment(itm.createdDate, "YYYY-MM-DDTHH:mm:ss").format("HH:mm:ss - dddd DD MMMM YYYY")}</td>
+                                        <td>{moment(itm.modifiedDate, "YYYY-MM-DDTHH:mm:ss").format("HH:mm:ss - dddd DD MMMM YYYY")}</td>
+
+                                        <td className="text-right">
+                                            <div className="button-row">
+
+                                                <button type="button" className="view-btn btn btn-light border p-1 py-2" onClick={this.handlePutRequest.bind(this, itm, "view")}>
+                                                    <i className="typcn icon typcn-eye text-primary"></i><span> View</span></button>
+
+
+                                                <button type="button" className="view-btn btn btn-light border p-1 py-2" onClick={this.handleDeleteRow.bind(this, itm.faqId)}>
+                                                    <i className="typcn icon typcn-delete-outline text-danger"></i><span>Remove</span></button>
+
+
+                                                <button type="button" className="view-btn btn btn-light border p-1 py-2" onClick={this.handlePutRequest.bind(this, itm, "edit")} >
+                                                    <span>Edit</span></button>
+
+                                            </div>
+                                        </td>
+
+
+                                    </tr>
+
+
+
+                                )) :
+                                    <tr>
+                                        <td>NO DATA FOUND</td>
+                                    </tr>
+                                }
+                            </tbody>
+
+
+
+                        </table>
+
+
+
+                        <h2 className="mp-2">Published Status False:</h2>
+                        <table className="tab-structure table table-striped mt-3 mb-3">
+                            <thead className="bg-primary">
+                                <tr>
+                                    <th>FAQid</th>
+                                    <th>Question</th>
+                                    <th>Answer</th>
+                                    <th>Section</th>
+                                    <th>CreatedDate</th>
+                                    <th>ModifiedDate</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+
+                            <tbody>
+                                {this.state.pendingData.length > 0 ? (this.state.pendingData.map((itm, index) =>
+
+                                    <tr key={index}>
+                                        <td>{itm.faqId}</td>
+                                        <td>{itm.question}</td>
+                                        <td>{itm.answer}</td>
+                                        <td>{itm.category}</td>
+                                        <td>{moment(itm.createdDate, "YYYY-MM-DDTHH:mm:ss").format("HH:mm:ss - dddd DD MMMM YYYY")}</td>
+                                        <td>{moment(itm.modifiedDate, "YYYY-MM-DDTHH:mm:ss").format("HH:mm:ss - dddd DD MMMM YYYY")}</td>
+
+                                        <td className="text-right">
+                                            <button type="button" className="btn btn-primary" data-bs-toggle="modal" data-bs-target={"#myModal1" + itm.faqId}>
+                                                <i className="typcn text-primary"  ></i>View </button>
+
+                                            <div id={"myModal1" + itm.faqId} className="modal fade" aria-labelledby="tab-structure" aria-hidden="true">
+                                                <div className="modal-dialog">
+                                                    <div className="modal-content">
+
+                                                        <div className="modal-body">
+                                                            <h5>FAQid:</h5><p>{itm.faqId}</p>
+                                                            <h5>Question:</h5><p>{itm.question}</p>
+                                                            <h5>Answer: </h5><p>{itm.answer}</p>
+                                                            <h5>Section:</h5> <p>{itm.category}</p>
+
+                                                        </div>
+                                                        <div className="modal-footer">
+                                                            <button type="button" className="btn btn-default" data-bs-dismiss="modal">Close</button>
+                                                        </div>
+                                                    </div>
+
+                                                </div>
+                                            </div>
+
+
+                                        </td>
+                                    </tr>
+
+
+                                )) :
+                                    <tr>
+                                        <td>NO DATA FOUND</td>
+                                    </tr>
+                                }
+                            </tbody>
+
+
+
+                        </table>
+                        {this.state.modelItm != "" &&
+                            <div id="faqmodel">{this.popUp(this.state.modelItm, this.state.modelType)}</div>
+                        }
+                    </div>
+                    </div>
+                
+                </div>
+                )
+            }
+        }
+        ReactDOM.render(<Faq />, document.getElementById("Faq"));
+    </script>
+</body>
+
+</html>
